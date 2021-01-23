@@ -1,0 +1,14 @@
+Task
+You need to implement basic matching engine:
+1. implementation should provide ability to send order, get orderbook/tradehistory, get
+single order by ID.
+2. You can imagine the Instrument Pair BTC/USD pair for this.
+3. Market and Limit Order minimum support.
+4. Need to have good concurrency management
+
+Guidance
+1. Use maven as building tool
+2. Don’t use any third party libraries/frameworks (only Java SE)
+3. Don’t use any persistence storage (only in-memory data structures)
+4. Provide tests if necessary (for tests you can use third-party libraries)
+5. Solution should thrive for low latency and low GC.
