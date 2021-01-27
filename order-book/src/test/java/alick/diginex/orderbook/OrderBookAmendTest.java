@@ -5,6 +5,7 @@ import alick.diginex.entities.Side;
 import alick.diginex.orderbook.request.AmendRequest;
 import alick.diginex.orderbook.request.NewRequest;
 import alick.diginex.orderbook.response.*;
+import alick.diginex.orderbook.response.Level2Summary.PriceQuantity;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,14 +16,14 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 public class OrderBookAmendTest extends OrderBookTestBase {
 	@Test
 	public void amendNonExistentOrder() {
-		final NewRequest newRequest = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
+		final NewRequest newRequest = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(newRequest);
 			assertThat("new order action successful", resp1, instanceOf(SuccessResponse.class));
 		}
 
 		final long orderId = idGenerator.getNextId();
-		final AmendRequest request = new AmendRequest(orderId, Side.BUY, OrderType.LIMIT, 100, 99.8);
+		final AmendRequest request = AmendRequest.builder().orderId(orderId).side(Side.BUY).orderType(OrderType.LIMIT).newOrderQuantity(100).newPrice(99.8).build();
 		{
 			final Response response = this.orderBook.submitRequest(request);
 
@@ -33,15 +34,15 @@ public class OrderBookAmendTest extends OrderBookTestBase {
 			assertThat("bid market depth after failed amend", errorResp.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after failed amend", errorResp.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after failed amend", errorResp.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(newRequest.getPrice(), newRequest.getQuantity())));
+					PriceQuantity.builder().price(newRequest.getPrice()).quantity(newRequest.getQuantity()).build()));
 			assertThat("no executions on error", errorResp.getExecutions(), empty());
 		}
 	}
 
 	@Test
 	public void amendDownQuantity() {
-		final NewRequest newRequest1 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
-		final NewRequest newRequest2 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
+		final NewRequest newRequest1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
+		final NewRequest newRequest2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
 
 		{
 			final Response resp1 = this.orderBook.submitRequest(newRequest1);
@@ -52,23 +53,23 @@ public class OrderBookAmendTest extends OrderBookTestBase {
 			final SuccessResponse successResp = (SuccessResponse) resp2;
 			assertThat("ask market depth after new orders", successResp.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after new orders", successResp.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(newRequest1.getPrice(), newRequest1.getQuantity() + newRequest2.getQuantity())));
+					PriceQuantity.builder().price(newRequest1.getPrice()).quantity(newRequest1.getQuantity() + newRequest2.getQuantity()).build()));
 		}
-		final AmendRequest amendOrder1 = new AmendRequest(newRequest1.getOrderId(), newRequest1.getSide(), newRequest1.getOrderType(), 50, newRequest1.getPrice());
+		final AmendRequest amendOrder1 = AmendRequest.builder().orderId(newRequest1.getOrderId()).side(newRequest1.getSide()).orderType(newRequest1.getOrderType()).newOrderQuantity(50).newPrice(newRequest1.getPrice()).build();
 		{
 			final Response amendResp1 = this.orderBook.submitRequest(amendOrder1);
 			assertThat("amend action successful", amendResp1, instanceOf(SuccessResponse.class));
 
 			assertThat("ask market depth after successful amend", amendResp1.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after successful amend", amendResp1.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(newRequest1.getPrice(), amendOrder1.getNewOrderQuantity() + newRequest2.getQuantity())));
+					PriceQuantity.builder().price(newRequest1.getPrice()).quantity(amendOrder1.getNewOrderQuantity() + newRequest2.getQuantity()).build()));
 		}
 	}
 
 	@Test
 	public void amendUpQuantity() {
-		final NewRequest newRequest1 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
-		final NewRequest newRequest2 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
+		final NewRequest newRequest1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
+		final NewRequest newRequest2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(newRequest1);
 			assertThat("new order 1 action successful", resp1, instanceOf(SuccessResponse.class));
@@ -77,23 +78,23 @@ public class OrderBookAmendTest extends OrderBookTestBase {
 
 			assertThat("ask market depth after new orders", resp2.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after new orders", resp2.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(newRequest1.getPrice(), newRequest1.getQuantity() + newRequest2.getQuantity())));
+					PriceQuantity.builder().price(newRequest1.getPrice()).quantity(newRequest1.getQuantity() + newRequest2.getQuantity()).build()));
 		}
 
-		final AmendRequest amendOrder1 = new AmendRequest(newRequest1.getOrderId(), newRequest1.getSide(), newRequest1.getOrderType(), 123, newRequest1.getPrice());
+		final AmendRequest amendOrder1 = AmendRequest.builder().orderId(newRequest1.getOrderId()).side(newRequest1.getSide()).orderType(newRequest1.getOrderType()).newOrderQuantity(123).newPrice(newRequest1.getPrice()).build();
 		{
 			final Response amendResp1 = this.orderBook.submitRequest(amendOrder1);
 			assertThat("amend action successful", amendResp1, instanceOf(SuccessResponse.class));
 			assertThat("ask market depth after successful amend", amendResp1.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after successful amend", amendResp1.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(newRequest1.getPrice(), amendOrder1.getNewOrderQuantity() + newRequest2.getQuantity())));
+					PriceQuantity.builder().price(newRequest1.getPrice()).quantity(amendOrder1.getNewOrderQuantity() + newRequest2.getQuantity()).build()));
 		}
 	}
 
 	@Test
 	public void amendUpQuantityChangesExecutionOrder() {
-		final NewRequest buyRequest1 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 110, 99.9);
-		final NewRequest buyRequest2 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
+		final NewRequest buyRequest1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(110).price(99.9).build();
+		final NewRequest buyRequest2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(buyRequest1);
 			assertThat("new order 1 action successful", resp1, instanceOf(SuccessResponse.class));
@@ -103,23 +104,23 @@ public class OrderBookAmendTest extends OrderBookTestBase {
 			assertThat("bid market depth after new orders", resp2.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after new orders", resp2.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after new orders", resp2.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(buyRequest1.getPrice(), 110 + 100)));
+					PriceQuantity.builder().price(buyRequest1.getPrice()).quantity(110 + 100).build()));
 		}
 
 		// originally, order 1 gets crossed first
-		final NewRequest sellReq0 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 10, 99.9);
+		final NewRequest sellReq0 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(10).price(99.9).build();
 		{
 			final Response sellResp0 = this.orderBook.submitRequest(sellReq0);
 			assertThat("new sell order 0 successful", sellResp0, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after sell 0", sellResp0.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(99.9, (110 - 10) + 100)));
+					PriceQuantity.builder().price(99.9).quantity((110 - 10) + 100).build()));
 			assertThat("ask summary after sell 1", sellResp0.getAskSummary().getDepths(), empty());
 			final SuccessResponse success0 = (SuccessResponse) sellResp0;
 			assertThat("execution 1", success0.getExecutions(), containsInAnyOrder(
-					new Execution(buyRequest1.getOrderId(), sellReq0.getOrderId(), 10, sellReq0.getPrice())
+					Execution.builder().buyOrderId(buyRequest1.getOrderId()).sellOrderId(sellReq0.getOrderId()).quantity(10).price(sellReq0.getPrice()).build()
 			));
 		}
-		final AmendRequest amendOrder1 = new AmendRequest(buyRequest1.getOrderId(),buyRequest1.getSide(),buyRequest1.getOrderType(), 110 - 10 + 23, buyRequest1.getPrice());
+		final AmendRequest amendOrder1 = AmendRequest.builder().orderId(buyRequest1.getOrderId()).side(buyRequest1.getSide()).orderType(buyRequest1.getOrderType()).newOrderQuantity(110 - 10 + 23).newPrice(buyRequest1.getPrice()).build();
 		{
 			final Response amendResp1 = this.orderBook.submitRequest(amendOrder1);
 			assertThat("amend action successful", amendResp1, instanceOf(SuccessResponse.class));
@@ -127,42 +128,42 @@ public class OrderBookAmendTest extends OrderBookTestBase {
 			assertThat("bid market depth after successful amend", amendResp1.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after successful amend", amendResp1.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after successful amend", amendResp1.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(buyRequest1.getPrice(), 100 + 123)));
+					PriceQuantity.builder().price(buyRequest1.getPrice()).quantity(100 + 123).build()));
 		}
 		// cross now, order 2 should get executed before order 1
-		final NewRequest sellReq1 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 80, 99.9);
+		final NewRequest sellReq1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(80).price(99.9).build();
 		{
 			final Response sellResp1 = this.orderBook.submitRequest(sellReq1);
 			assertThat("new sell order 1 successful", sellResp1, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after sell 1", sellResp1.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(99.9, (100 - 80) + 123)));
+					PriceQuantity.builder().price(99.9).quantity((100 - 80) + 123).build()));
 			assertThat("ask summary after sell 1", sellResp1.getAskSummary().getDepths(), empty());
 			final SuccessResponse success1 = (SuccessResponse) sellResp1;
 			assertThat("execution 1", success1.getExecutions(), containsInAnyOrder(
-					new Execution(buyRequest2.getOrderId(), sellReq1.getOrderId(), 80, sellReq1.getPrice())
+					Execution.builder().buyOrderId(buyRequest2.getOrderId()).sellOrderId(sellReq1.getOrderId()).quantity(80).price(sellReq1.getPrice()).build()
 			));
 		}
-		final NewRequest sellReq2 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 45, 99.9);
+		final NewRequest sellReq2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(45).price(99.9).build();
 		{
 			final Response sellResp2 = this.orderBook.submitRequest(sellReq2);
 			assertThat("new sell order 2 successful", sellResp2, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after sell 1", sellResp2.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(99.9, (100 - 80 - 20) + (123 - 25))));
+					PriceQuantity.builder().price(99.9).quantity((100 - 80 - 20) + (123 - 25)).build()));
 			assertThat("ask summary after sell 1", sellResp2.getAskSummary().getDepths(), empty());
 			final SuccessResponse success2 = (SuccessResponse) sellResp2;
 			// finish crossing with order 2 first, then order 1
 			assertThat("execution 2", success2.getExecutions(), containsInAnyOrder(
-					new Execution(buyRequest2.getOrderId(), sellReq2.getOrderId(), 20, sellReq2.getPrice()),
-					new Execution(buyRequest1.getOrderId(), sellReq2.getOrderId(), 25, sellReq2.getPrice())
+					Execution.builder().buyOrderId(buyRequest2.getOrderId()).sellOrderId(sellReq2.getOrderId()).quantity(20).price(sellReq2.getPrice()).build(),
+					Execution.builder().buyOrderId(buyRequest1.getOrderId()).sellOrderId(sellReq2.getOrderId()).quantity(25).price(sellReq2.getPrice()).build()
 			));
 		}
 	}
 
 	@Test
 	public void amendPriceCanTriggerExecution() {
-		final NewRequest buyRequest1 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
-		final NewRequest buyRequest2 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 200, 99.9);
-		final NewRequest sellRequest3 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 140, 100.5);
+		final NewRequest buyRequest1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
+		final NewRequest buyRequest2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(200).price(99.9).build();
+		final NewRequest sellRequest3 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(140).price(100.5).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(buyRequest1);
 			assertThat("new order 1 action successful", resp1, instanceOf(SuccessResponse.class));
@@ -173,25 +174,25 @@ public class OrderBookAmendTest extends OrderBookTestBase {
 
 			final SuccessResponse resp = (SuccessResponse) resp3;
 			assertThat("bid summary after new orders", resp.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(buyRequest1.getPrice(), 100 + 200)));
+					PriceQuantity.builder().price(buyRequest1.getPrice()).quantity(100 + 200).build()));
 			assertThat("ask summary after new orders", resp.getAskSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(sellRequest3.getPrice(), 140)));
+					PriceQuantity.builder().price(sellRequest3.getPrice()).quantity(140).build()));
 			assertThat("executions after new order", resp.getExecutions(), empty());
 		}
 		// just amend price
-		final AmendRequest amendReq4 = new AmendRequest(buyRequest2.getOrderId(), buyRequest2.getSide(), buyRequest2.getOrderType(), buyRequest2.getQuantity(), sellRequest3.getPrice());
+		final AmendRequest amendReq4 = AmendRequest.builder().orderId(buyRequest2.getOrderId()).side(buyRequest2.getSide()).orderType(buyRequest2.getOrderType()).newOrderQuantity(buyRequest2.getQuantity()).newPrice(sellRequest3.getPrice()).build();
 		{
 			final Response resp4 = this.orderBook.submitRequest(amendReq4);
 			assertThat("amend action successful", resp4, instanceOf(SuccessResponse.class));
 			final SuccessResponse resp = (SuccessResponse) resp4;
 			assertThat("bid summary after amend price", resp.getBidSummary().getDepths(), contains(
-					new Level2Summary.PriceQuantity(amendReq4.getNewPrice(), 200 - 140),
-					new Level2Summary.PriceQuantity(buyRequest1.getPrice(), 100)
+					PriceQuantity.builder().price(amendReq4.getNewPrice()).quantity(200 - 140).build(),
+					PriceQuantity.builder().price(buyRequest1.getPrice()).quantity(100).build()
 			));
 			assertThat("ask summary after amend price", resp.getAskSummary().getDepths(), empty());
 
 			assertThat("executions after amend price", resp.getExecutions(), containsInAnyOrder(
-					new Execution(buyRequest2.getOrderId(), sellRequest3.getOrderId(), 140, sellRequest3.getPrice())
+					Execution.builder().buyOrderId(buyRequest2.getOrderId()).sellOrderId(sellRequest3.getOrderId()).quantity(140).price(sellRequest3.getPrice()).build()
 			));
 		}
 	}

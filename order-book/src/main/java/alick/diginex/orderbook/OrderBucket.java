@@ -1,32 +1,26 @@
 package alick.diginex.orderbook;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.log4j.Log4j2;
+import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
+@Getter
+@Log4j2
 class OrderBucket {
 	private final double priceOfBucket;
 	private double quantityInQueue = 0.0d;
+	private final FastList<OrderEntry> orderEntryList = new FastList<>(100);
 
-	// would have used a ArrayList from eclipse collections for quicker traversal
-	private final ArrayList<OrderEntry> orderEntryList = new ArrayList<>(100);
-
-	OrderBucket(final double priceOfBucket) {
+	@lombok.Builder(builderClassName = "Builder")
+	private OrderBucket(final double priceOfBucket) {
 		this.priceOfBucket = priceOfBucket;
-	}
-
-	double getPriceOfBucket() {
-		return priceOfBucket;
-	}
-
-	double getQuantityInQueue() {
-		return quantityInQueue;
-	}
-
-	ArrayList<OrderEntry> getOrderEntryList() {
-		return orderEntryList;
 	}
 
 	/**
@@ -44,7 +38,7 @@ class OrderBucket {
 	 * @param orderEntry the order entry to add
 	 */
 	boolean enqueueOrder(final OrderEntry orderEntry) {
-		System.out.printf("Bucket(%f): Queueing order '%d', qty=%f%n", this.priceOfBucket, orderEntry.getOrderId(), orderEntry.getRemainingQuantity());
+		log.debug("Bucket({}): Queueing order '{}', qty={}", this.priceOfBucket, orderEntry.getOrderId(), orderEntry.getRemainingQuantity());
 		final boolean success = this.orderEntryList.add(orderEntry);
 		quantityInQueue += orderEntry.getRemainingQuantity();
 		return success;
@@ -53,45 +47,13 @@ class OrderBucket {
 	/**
 	 * Represents an order which was matched, and the quantity that was matched against this order
 	 */
-
+	@Getter
+	@ToString(of = {"orderId", "quantity"})
+	@EqualsAndHashCode(of = {"orderId", "quantity"})
+	@lombok.Builder(builderClassName = "Builder", access = AccessLevel.PRIVATE)
 	static class MatchedOrder {
 		private final long orderId;
 		private final double quantity;
-
-		MatchedOrder(final long orderId, final double quantity) {
-			this.orderId = orderId;
-			this.quantity = quantity;
-		}
-
-		public long getOrderId() {
-			return orderId;
-		}
-
-		public double getQuantity() {
-			return quantity;
-		}
-
-		@Override
-		public String toString() {
-			return "MatchedOrder(" +
-					"orderId=" + orderId +
-					", quantity=" + quantity +
-					')';
-		}
-
-		@Override
-		public boolean equals(final Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			final MatchedOrder that = (MatchedOrder) o;
-			return getOrderId() == that.getOrderId()
-					&& getQuantity() == that.getQuantity();
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(getOrderId(), getQuantity());
-		}
 	}
 
 	/**
@@ -101,7 +63,7 @@ class OrderBucket {
 	 * @return The match result; contains a summary of how much was executed, and the executions, and
 	 */
 	MatchResult matchOrder(final OrderEntry oppositeOrderEntry) {
-		System.out.printf("Bucket(%f): Matching order '%s' in bucket : %f shares@%s%n", this.priceOfBucket, oppositeOrderEntry, this.quantityInQueue, this.priceOfBucket);
+		log.debug("Bucket({}): Matching order '{}' in bucket : {} shares@{}", this.priceOfBucket, oppositeOrderEntry, this.quantityInQueue, this.priceOfBucket);
 		final ArrayList<MatchedOrder> matchedOrders = new ArrayList<>();
 
 		final double originalQtyToMatch = oppositeOrderEntry.getRemainingQuantity();
@@ -111,53 +73,57 @@ class OrderBucket {
 			final OrderEntry curEntry = it.next();
 			final double qtyTaken = curEntry.takeQuantity(remainingQty);
 			if (qtyTaken > 0) {
-				System.out.printf("Bucket(%f): Matched '%d' against '%d', qty=%f%n", this.priceOfBucket, oppositeOrderEntry.getOrderId(), curEntry.getOrderId(), qtyTaken);
-				matchedOrders.add(new MatchedOrder(curEntry.getOrderId(), qtyTaken));
+				log.debug("Bucket({}): Matched '{}' against '{}', qty={}", this.priceOfBucket, oppositeOrderEntry.getOrderId(), curEntry.getOrderId(), qtyTaken);
+				matchedOrders.add(MatchedOrder.builder().orderId(curEntry.getOrderId()).quantity(qtyTaken).build());
 				remainingQty -= qtyTaken;
 			}
 		}
 
 		final double totalExecutedQty = originalQtyToMatch - remainingQty;
 
-		List<Long> doneOrderIds = Collections.emptyList();
+		LongArrayList doneOrderIds = new LongArrayList();
 		this.quantityInQueue -= totalExecutedQty;
 		if (totalExecutedQty > 0) {
-			final ArrayList<Long> removedEntries = new ArrayList<>(matchedOrders.size());
-			final boolean removed = this.orderEntryList.removeIf(orderEntry -> {
+			final LongArrayList removedEntries = new LongArrayList(matchedOrders.size());
+			final boolean removed = this.orderEntryList.removeIfWith((orderEntry, doneIdList) -> {
 				if (orderEntry.isOrderDone()) {
-					removedEntries.add(orderEntry.getOrderId());
+					doneIdList.add(orderEntry.getOrderId());
 					return true;
 				}
 				return false;
-			});
+			}, doneOrderIds);
 			if (removed) {
-				System.out.printf("Bucket(%f): Orders are done: %s%n", this.priceOfBucket, removedEntries);
+				log.debug("Bucket({}): Orders are done: {}", this.priceOfBucket, removedEntries);
 				doneOrderIds = removedEntries;
 			}
 		}
 
-		return new MatchResult(totalExecutedQty, matchedOrders, doneOrderIds);
+		return MatchResult.builder()
+				.totalMatchedQuantity(totalExecutedQty)
+				.matchedOrders(matchedOrders)
+				.doneOrderIds(doneOrderIds)
+				.build();
 	}
 
 	/**
 	 * Cancel the order with the given order ID.
 	 *
 	 * @param orderId the ID of the order to be cancelled
-	 * @return {@code true} if the ordder entry was found and cancelled, {@code false} otherwise.
+	 * @return {@code true} if the order entry was found and cancelled, {@code false} otherwise.
 	 */
 	boolean cancelOrder(final long orderId) {
 		final Iterator<OrderEntry> it = this.orderEntryList.iterator();
 		while (it.hasNext()) {
 			final OrderEntry curEntry = it.next();
 			if (curEntry.getOrderId() == orderId) {
-				System.out.printf("Bucket(%f): Cancel order '%d'%n", this.priceOfBucket, orderId);
+				log.debug("Bucket({}): Cancel order '{}'", this.priceOfBucket, orderId);
 				it.remove();
 				// take out the quantity for consistency, in case the object is referenced somewhere else
 				this.quantityInQueue -= curEntry.takeQuantity(curEntry.getRemainingQuantity());
 				return true;
 			}
 		}
-		System.out.printf("Bucket(%f): Unable to cancel order '%d', order not found%n", this.priceOfBucket, orderId);
+		log.debug("Bucket({}): Unable to cancel order '{}', order not found", this.priceOfBucket, orderId);
 		return false;
 	}
 
@@ -181,13 +147,13 @@ class OrderBucket {
 			final double origQty = curEntry.getRemainingQuantity();
 			final double delta = origQty - newQuantity;
 			if (delta > 0) {
-				System.out.printf("Bucket(%f): In-place amend order '%d' quantity from %f to %f%n", this.priceOfBucket, orderId, origQty, newQuantity);
+				log.debug("Bucket({}): In-place amend order '{}' quantity from {} to {}", this.priceOfBucket, orderId, origQty, newQuantity);
 				curEntry.takeQuantity(delta);
 				this.quantityInQueue -= delta;
 				return true;
 			}
 			else {
-				System.out.printf("Bucket(%f): Removing order '%d' for re-queueing; quantity from %f to %f%n", this.priceOfBucket, orderId, origQty, newQuantity);
+				log.debug("Bucket({}): Removing order '{}' for re-queueing; quantity from {} to {}", this.priceOfBucket, orderId, origQty, newQuantity);
 				queueOrderAtEnd = true;
 				this.quantityInQueue -= curEntry.getRemainingQuantity();
 				it.remove();

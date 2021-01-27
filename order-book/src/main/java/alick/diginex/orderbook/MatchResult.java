@@ -1,5 +1,11 @@
 package alick.diginex.orderbook;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
+import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
+
 import java.util.List;
 
 /**
@@ -7,35 +13,13 @@ import java.util.List;
  * </p>
  * Contains the total matched quantity, and the list of orders matched against with the respective matched quantities
  */
+@Getter
+@ToString(of={"totalMatchedQuantity", "matchedOrders", "doneOrderIds"})
+@Builder
 class MatchResult {
 	private final double totalMatchedQuantity;
+	@NonNull
 	private final List<OrderBucket.MatchedOrder> matchedOrders;
-	private final List<Long> doneOrderIds;
-
-	MatchResult(final double totalMatchedQuantity, final List<OrderBucket.MatchedOrder> matchedOrders, final List<Long> doneOrderIds) {
-		this.totalMatchedQuantity = totalMatchedQuantity;
-		this.matchedOrders = matchedOrders;
-		this.doneOrderIds = doneOrderIds;
-	}
-
-	double getTotalMatchedQuantity() {
-		return totalMatchedQuantity;
-	}
-
-	List<OrderBucket.MatchedOrder> getMatchedOrders() {
-		return matchedOrders;
-	}
-
-	List<Long> getDoneOrderIds() {
-		return doneOrderIds;
-	}
-
-	@Override
-	public String toString() {
-		return "MatchResult(" +
-				"totalMatchedQuantity=" + totalMatchedQuantity +
-				", matchedOrders=" + matchedOrders +
-				", doneOrderIds=" + doneOrderIds +
-				')';
-	}
+	@NonNull
+	private final LongArrayList doneOrderIds;
 }

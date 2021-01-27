@@ -1,7 +1,13 @@
 package alick.diginex.orderbook;
 
-import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
+@Getter
+@EqualsAndHashCode(of = "orderId")
+@ToString(of = {"orderId", "remainingQuantity"})
 class OrderEntry {
 	private final long orderId;
 	private double remainingQuantity;
@@ -11,40 +17,12 @@ class OrderEntry {
 	 *
 	 * @throws IllegalArgumentException if order quantity is zero / negative
 	 */
+	@lombok.Builder(builderClassName = "Builder", access = AccessLevel.PRIVATE)
 	OrderEntry(final long orderId, final double orderQuantity) {
 		if (orderQuantity <= 0.0d)
 			throw new IllegalArgumentException("order " + orderId + ": quantity cannot be zero or negative: " + orderQuantity);
 		this.remainingQuantity = orderQuantity;
 		this.orderId = orderId;
-	}
-
-	public long getOrderId() {
-		return orderId;
-	}
-
-	public double getRemainingQuantity() {
-		return remainingQuantity;
-	}
-
-	@Override
-	public boolean equals(final Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		final OrderEntry that = (OrderEntry) o;
-		return getOrderId() == that.getOrderId();
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(getOrderId());
-	}
-
-	@Override
-	public String toString() {
-		return "OrderEntry(" +
-				"orderId=" + orderId +
-				", remainingQuantity=" + remainingQuantity +
-				')';
 	}
 
 	/**

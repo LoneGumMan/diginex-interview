@@ -8,6 +8,10 @@ import alick.diginex.orderbook.request.CancelRequest;
 import alick.diginex.orderbook.request.NewRequest;
 import alick.diginex.orderbook.request.Request;
 import alick.diginex.orderbook.response.*;
+import alick.diginex.orderbook.response.Level2Summary.PriceQuantity;
+import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
+import org.eclipse.collections.impl.map.mutable.primitive.LongObjectHashMap;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -20,9 +24,9 @@ import static java.util.stream.Collectors.toList;
  *     <li>order id</li>
  *     <li>quantity remaining for each of the order</li>
  * </ul>
- *
+ * <p>
  * There is only one point of entry into the order book, {@link #submitRequest(Request)}, which supports new / amend / cancel of orders.
- *
+ * <p>
  * Thread-safety: This order book is <em>not</em> thread-safe.
  */
 public class OrderBook {
@@ -33,20 +37,20 @@ public class OrderBook {
 	 * <p/>
 	 * The index order is maintained between this and {@link #buyBucketList}
 	 */
-	private final ArrayList<Double> buyPriceList;
+	private final DoubleArrayList buyPriceList;
 	/**
 	 * order buckets for buy orders
 	 */
-	private final ArrayList<OrderBucket> buyBucketList;
+	private final FastList<OrderBucket> buyBucketList;
 
 	/**
 	 * Tracks the list of prices for which there is a bucket list for sell orders
 	 */
-	private final ArrayList<Double> sellPriceList;
+	private final DoubleArrayList sellPriceList;
 	/**
 	 * order buckets for sell orders
 	 */
-	private final ArrayList<OrderBucket> sellBucketList;
+	private final FastList<OrderBucket> sellBucketList;
 
 	// in case a market order has residual quantity after wiping out the other side
 	// in NYSE the residual market order is not displayed
@@ -56,7 +60,7 @@ public class OrderBook {
 
 	// this is used to look up which bucket an order falls into
 	// eclipse collection LongObjectHashMap would have been much more efficient
-	private final HashMap<Long, OrderBucket> orderId2OrderBucket = new HashMap<>();
+	private final LongObjectHashMap<OrderBucket> orderId2OrderBucket = new LongObjectHashMap<>();
 
 	/**
 	 * The price at which the most recent trade was executed, or the reference price/IEP for an IPO stock.
@@ -83,13 +87,13 @@ public class OrderBook {
 	 */
 	public OrderBook(final double referencePrice, final int initialSpreads) {
 		this.lastPrice = referencePrice;
-		this.buyBucketList = new ArrayList<>(initialSpreads);
-		this.buyPriceList = new ArrayList<>(initialSpreads);
-		this.buyMarketOrderBucket = new OrderBucket(0.0);
+		this.buyBucketList = new FastList<>(initialSpreads);
+		this.buyPriceList = new DoubleArrayList(initialSpreads);
+		this.buyMarketOrderBucket = OrderBucket.builder().priceOfBucket(0.0).build();
 
-		this.sellBucketList = new ArrayList<>(initialSpreads);
-		this.sellPriceList = new ArrayList<>(initialSpreads);
-		this.sellMarketOrderBucket = new OrderBucket(0.0);
+		this.sellBucketList = new FastList<>(initialSpreads);
+		this.sellPriceList = new DoubleArrayList(initialSpreads);
+		this.sellMarketOrderBucket = OrderBucket.builder().priceOfBucket(0.0).build();
 	}
 
 	/**
@@ -104,7 +108,7 @@ public class OrderBook {
 	 */
 	public Response submitRequest(final Request request) {
 		Objects.requireNonNull(request, "request cannot be null");
-		if ( !(request instanceof NewRequest) && !(request instanceof CancelRequest) && !(request instanceof AmendRequest))
+		if (!(request instanceof NewRequest) && !(request instanceof CancelRequest) && !(request instanceof AmendRequest))
 			throw new UnsupportedOperationException("The given request type : " + request.getClass().getSimpleName() + " for order ID " + request.getOrderId() + " is not supported");
 
 		final Response curResponse;
@@ -116,19 +120,21 @@ public class OrderBook {
 			curResponse = handleAmendRequest((AmendRequest) request);
 
 		if (curResponse instanceof SuccessResponse) {
-			return new SuccessResponse(
-					curResponse.getOrderId(),
-					snapBucketList(this.buyBucketList),
-					snapBucketList(this.sellBucketList),
-					curResponse.getExecutions());
+			return SuccessResponse.builder()
+					.orderId(curResponse.getOrderId())
+					.bidSummary(snapBucketList(this.buyBucketList))
+					.askSummary(snapBucketList(this.sellBucketList))
+					.executions(curResponse.getExecutions())
+					.build();
 		}
 		else {
-			return new ErrorResponse(
-					curResponse.getOrderId(),
-					snapBucketList(this.buyBucketList),
-					snapBucketList(this.sellBucketList),
-					((ErrorResponse) curResponse).getErrorMsg(),
-					curResponse.getExecutions());
+			return ErrorResponse.builder()
+					.orderId(curResponse.getOrderId())
+					.bidSummary(snapBucketList(this.buyBucketList))
+					.askSummary(snapBucketList(this.sellBucketList))
+					.errorMsg(((ErrorResponse) curResponse).getErrorMsg())
+					.executions(curResponse.getExecutions())
+					.build();
 		}
 	}
 
@@ -156,8 +162,8 @@ public class OrderBook {
 	private static OrderBucket retrieveBucketForPrice(
 			final double orderPrice,
 			final PriceCompareFunction priceCompareFunction,
-			final ArrayList<Double> priceList,
-			final ArrayList<OrderBucket> bucketList) {
+			final DoubleArrayList priceList,
+			final FastList<OrderBucket> bucketList) {
 		final OrderBucket bucketForPrice;
 		int bucketIndex = priceList.indexOf(orderPrice);
 		if (bucketIndex >= 0) {
@@ -171,9 +177,9 @@ public class OrderBook {
 					break;
 				}
 			}
-			bucketForPrice = new OrderBucket(orderPrice);
+			bucketForPrice = OrderBucket.builder().priceOfBucket(orderPrice).build();
 			if (indexToInsert >= 0) {
-				priceList.add(indexToInsert, orderPrice);
+				priceList.addAtIndex(indexToInsert, orderPrice);
 				bucketList.add(indexToInsert, bucketForPrice);
 			}
 			else {
@@ -226,11 +232,12 @@ public class OrderBook {
 				return makeErrorResponse(orderId, "Unable to queue new order '" + orderId + "'");
 		}
 
-		return new SuccessResponse(
-				request.getOrderId(),
-				snapBucketList(this.buyBucketList),
-				snapBucketList(this.sellBucketList),
-				executions);
+		return SuccessResponse.builder()
+				.orderId(request.getOrderId())
+				.bidSummary(snapBucketList(this.buyBucketList))
+				.askSummary(snapBucketList(this.sellBucketList))
+				.executions(executions)
+				.build();
 	}
 
 	private Response handleNewSellRequest(final NewRequest request, final OrderEntry initialOrderEntry) {
@@ -273,11 +280,12 @@ public class OrderBook {
 				return makeErrorResponse(orderId, "Unable to queue new order '" + orderId + "'");
 		}
 
-		return new SuccessResponse(
-				request.getOrderId(),
-				snapBucketList(this.buyBucketList),
-				snapBucketList(this.sellBucketList),
-				executions);
+		return SuccessResponse.builder()
+				.orderId(request.getOrderId())
+				.bidSummary(snapBucketList(this.buyBucketList))
+				.askSummary(snapBucketList(this.sellBucketList))
+				.executions(executions)
+				.build();
 	}
 
 	/**
@@ -295,17 +303,18 @@ public class OrderBook {
 		if (matchResult.getTotalMatchedQuantity() > 0) {
 			fromOrderEntry.takeQuantity(matchResult.getTotalMatchedQuantity());
 			return matchResult.getMatchedOrders().stream()
-					.map(m -> new Execution(
-							(isBuy ? fromOrderEntry.getOrderId() : m.getOrderId()),
-							(isBuy ? m.getOrderId() : fromOrderEntry.getOrderId()),
-							m.getQuantity(),
-							executionPrice))
+					.map(m -> Execution.builder()
+							.buyOrderId(isBuy ? fromOrderEntry.getOrderId() : m.getOrderId())
+							.sellOrderId(isBuy ? m.getOrderId() : fromOrderEntry.getOrderId())
+							.quantity(m.getQuantity())
+							.price(executionPrice)
+							.build())
 					.collect(toList());
 		}
 		return Collections.emptyList();
 	}
 
-	private static boolean queueOrderToBucket(final long orderId, final OrderEntry initialOrderEntry, final OrderBucket bucketToEnqueue, final HashMap<Long, OrderBucket> orderId2OrderBucket) {
+	private static boolean queueOrderToBucket(final long orderId, final OrderEntry initialOrderEntry, final OrderBucket bucketToEnqueue, final LongObjectHashMap<OrderBucket> orderId2OrderBucket) {
 		final boolean success = bucketToEnqueue.enqueueOrder(initialOrderEntry);
 		if (success)
 			orderId2OrderBucket.put(orderId, bucketToEnqueue);
@@ -371,34 +380,38 @@ public class OrderBook {
 			return makeErrorResponse(orderId, "Failed to amend the given order ID '" + orderId + "'");
 
 		final NewRequest newRequest =
-				new NewRequest(
-						request.getOrderId(),
-						request.getSide(),
-						request.getOrderType(),
-						request.getNewOrderQuantity(),
-						request.getNewPrice());
+				NewRequest.builder()
+						.orderId(request.getOrderId())
+						.side(request.getSide())
+						.orderType(request.getOrderType())
+						.quantity(request.getNewOrderQuantity())
+						.price(request.getNewPrice())
+						.build();
 		return handleNewRequest(newRequest);
 	}
 
 	private ErrorResponse makeErrorResponse(final long orderId, final String message) {
-		return new ErrorResponse(
-				orderId,
-				snapBucketList(this.buyBucketList),
-				snapBucketList(this.sellBucketList),
-				message,
-				Collections.emptyList());
+		return ErrorResponse.builder()
+				.orderId(orderId)
+				.bidSummary(snapBucketList(this.buyBucketList))
+				.askSummary(snapBucketList(this.sellBucketList))
+				.errorMsg(message)
+				.executions(Collections.emptyList())
+				.build();
 	}
 
 	private SuccessResponse makeSuccessResponse(final long orderId) {
-		return new SuccessResponse(
-				orderId,
-				snapBucketList(this.buyBucketList),
-				snapBucketList(this.sellBucketList),
-				Collections.emptyList());
+		return SuccessResponse.builder()
+				.orderId(orderId)
+				.bidSummary(snapBucketList(this.buyBucketList))
+				.askSummary(snapBucketList(this.sellBucketList))
+				.executions(Collections.emptyList())
+				.build();
 	}
 
 	private static final class LeadingEmptyOrderBucketFilter implements Predicate<OrderBucket> {
 		boolean seenNonEmpty = false;
+
 		@Override
 		public boolean test(final OrderBucket orderBucket) {
 			seenNonEmpty = seenNonEmpty || !orderBucket.isEmpty();
@@ -407,11 +420,13 @@ public class OrderBook {
 	}
 
 	private static Level2Summary snapBucketList(final List<OrderBucket> bucketList) {
-		final List<Level2Summary.PriceQuantity> pxQtyList = bucketList.stream()
+		final Level2Summary.Builder l2Builder = Level2Summary.builder();
+		bucketList.stream()
 				.filter(new LeadingEmptyOrderBucketFilter())
-				.map(b -> new Level2Summary.PriceQuantity(b.getPriceOfBucket(), b.getQuantityInQueue()))
-				.collect(toList());
-		return new Level2Summary(pxQtyList);
+				.map(b -> PriceQuantity.builder().price(b.getPriceOfBucket()).quantity(b.getQuantityInQueue()).build())
+				.forEach(l2Builder::depth);
+
+		return l2Builder.build();
 	}
 
 	public OrderBookSnapshot snapshotOrderBook() {

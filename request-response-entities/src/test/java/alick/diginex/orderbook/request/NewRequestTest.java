@@ -21,41 +21,41 @@ class NewRequestTest {
 	@Test
 	public void badSideShouldThrow() {
 		assertThrows(NullPointerException.class,
-				() -> new NewRequest(this.random.nextLong(), null, OrderType.LIMIT, 10, 10),
+				() -> NewRequest.builder().orderId(this.random.nextLong()).orderType(OrderType.LIMIT).quantity(10).price(10).build(),
 				"null side");
 	}
 
 	@Test
 	public void badOrderTypeShouldThrow() {
 		assertThrows(NullPointerException.class,
-				() -> new NewRequest(this.random.nextLong(), Side.BUY, null, 10, 10),
+				() -> NewRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).quantity(10).price(10).build(),
 				"null order type");
 	}
 
 	@Test
 	public void zeroQuantityShouldThrow() {
 		assertThrows(IllegalArgumentException.class,
-				() -> new NewRequest(this.random.nextLong(), Side.BUY, OrderType.LIMIT, 0, 10),
+				() -> NewRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(0).price(10).build(),
 				"zero order quantity");
 	}
 
 	@Test
 	public void negativeQuantityShouldThrow() {
 		assertThrows(IllegalArgumentException.class,
-				() -> new NewRequest(this.random.nextLong(), Side.BUY, OrderType.LIMIT, -1, 10),
+				() -> NewRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(-1).price(10).build(),
 				"negative order quantity");
 	}
 
 	@Test
 	public void zeroPriceNonMarketOrderShouldThrow() {
 		assertThrows(IllegalArgumentException.class,
-				() -> new NewRequest(this.random.nextLong(), Side.BUY, OrderType.LIMIT, 10, 0),
+				() -> NewRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(10).price(0).build(),
 				"negative order quantity");
 	}
 
 	@Test
 	public void zeroPriceMarketOrderOK() {
 		Assertions.assertDoesNotThrow(
-				() -> new NewRequest(this.random.nextLong(), Side.BUY, OrderType.MARKET, 10, 0));
+				() -> NewRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.MARKET).quantity(10).price(0).build());
 	}
 }

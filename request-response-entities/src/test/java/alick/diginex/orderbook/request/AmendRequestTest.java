@@ -21,41 +21,41 @@ class AmendRequestTest {
 	@Test
 	public void badSideShouldThrow() {
 		assertThrows(NullPointerException.class,
-				() -> new AmendRequest(this.random.nextLong(), null, OrderType.LIMIT, 10, 10d),
+				() -> AmendRequest.builder().orderId(this.random.nextLong()).side(null).orderType(OrderType.LIMIT).newOrderQuantity(10).newPrice(10d).build(),
 				"null side");
 	}
 
 	@Test
 	public void badOrderTypeShouldThrow() {
 		assertThrows(NullPointerException.class,
-				() -> new AmendRequest(this.random.nextLong(), Side.BUY, null, 10, 10d),
+				() -> AmendRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(null).newOrderQuantity(10).newPrice(10d).build(),
 				"null order type");
 	}
 
 	@Test
 	public void zeroQuantityShouldThrow() {
 		assertThrows(IllegalArgumentException.class,
-				() -> new AmendRequest(this.random.nextLong(), Side.BUY, OrderType.LIMIT, 0, 10d),
+				() -> AmendRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.LIMIT).newOrderQuantity(0).newPrice(10d).build(),
 				"zero order quantity");
 	}
 
 	@Test
 	public void negativeQuantityShouldThrow() {
 		assertThrows(IllegalArgumentException.class,
-				() -> new AmendRequest(this.random.nextLong(), Side.BUY, OrderType.LIMIT, -1, 10d),
+				() -> AmendRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.LIMIT).newOrderQuantity(-1).newPrice(10d).build(),
 				"negative order quantity");
 	}
 
 	@Test
 	public void zeroPriceNonMarketOrderShouldThrow() {
 		assertThrows(IllegalArgumentException.class,
-				() -> new AmendRequest(this.random.nextLong(), Side.BUY, OrderType.LIMIT, 10, 0),
+				() -> AmendRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.LIMIT).newOrderQuantity(10).newPrice(0).build(),
 				"negative order quantity");
 	}
 
 	@Test
 	public void zeroPriceMarketOrderOK() {
 		Assertions.assertDoesNotThrow(
-				() -> new AmendRequest(this.random.nextLong(), Side.BUY, OrderType.MARKET, 10, 0));
+				() -> AmendRequest.builder().orderId(this.random.nextLong()).side(Side.BUY).orderType(OrderType.MARKET).newOrderQuantity(10).newPrice(0)).build();
 	}
 }

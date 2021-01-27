@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.*;
 class OrderBucketTest {
 	@Test
 	public void matchExactlyOneOrderFromQueue() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(1, 100));
 		bucket.enqueueOrder(new OrderEntry(2, 200));
@@ -42,7 +42,7 @@ class OrderBucketTest {
 
 	@Test
 	public void matchMoreThanOneOrder() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(1, 100));
 		bucket.enqueueOrder(new OrderEntry(2, 200));
@@ -78,7 +78,7 @@ class OrderBucketTest {
 
 	@Test
 	public void partialMatchOneOrder() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(2, 200));
 		bucket.enqueueOrder(new OrderEntry(3, 300));
@@ -110,7 +110,7 @@ class OrderBucketTest {
 
 	@Test
 	public void matchesMustBeInOrder() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(4, 400));
 		bucket.enqueueOrder(new OrderEntry(2, 200));
@@ -153,7 +153,7 @@ class OrderBucketTest {
 
 	@Test
 	public void matchExactQuantityInTheBucket() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(1, 100));
 		bucket.enqueueOrder(new OrderEntry(2, 200));
@@ -184,7 +184,7 @@ class OrderBucketTest {
 
 	@Test
 	public void moreQuantityThanInTheBucket() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(1, 100));
 		bucket.enqueueOrder(new OrderEntry(2, 200));
@@ -215,7 +215,7 @@ class OrderBucketTest {
 
 	@Test
 	public void cancelOrderSuccess() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(1, 100));
 		bucket.enqueueOrder(new OrderEntry(2, 200));
@@ -241,7 +241,7 @@ class OrderBucketTest {
 
 	@Test
 	public void cancelOrderNotInBucket() {
-		final OrderBucket bucket = new OrderBucket(100.0);
+		final OrderBucket bucket = OrderBucket.builder().priceOfBucket(100.0).build();
 
 		bucket.enqueueOrder(new OrderEntry(1, 100));
 		bucket.enqueueOrder(new OrderEntry(2, 200));

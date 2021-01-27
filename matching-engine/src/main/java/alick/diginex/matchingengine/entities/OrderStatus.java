@@ -5,7 +5,7 @@ package alick.diginex.matchingengine.entities;
  */
 public enum OrderStatus {
 	NEW,
-	PARTIAL_FILLLED,
+	PARTIAL_FILLED,
 	FILLED,
 	CANCELLED,
 	REPLACED,

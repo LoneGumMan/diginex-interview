@@ -21,14 +21,14 @@ import static org.hamcrest.collection.IsEmptyCollection.empty;
 public class OrderBookNewCancelTest extends OrderBookTestBase {
 	@Test
 	public void addFirstBuyOrderThenCancel() {
-		final NewRequest newRequest = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
+		final NewRequest newRequest = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(newRequest);
 			assertThat("new order action successful", resp1, instanceOf(SuccessResponse.class));
 			assertThat("bid market depth after new order", resp1.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after new order", resp1.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after new order", resp1.getBidSummary().getDepths(), contains(
-					new PriceQuantity(newRequest.getPrice(), newRequest.getQuantity())));
+					PriceQuantity.builder().price(newRequest.getPrice()).quantity(newRequest.getQuantity()).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price queue", snapshot.getBidMarketQueue(), empty());
@@ -40,7 +40,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("snapshot bid limit-price queue", snapshot.getBidLimitQueue().get(newRequest.getPrice()), contains(
 					new OrderOpenQty(resp1.getOrderId(), newRequest.getQuantity())));
 		}
-		final CancelRequest cancelRequest = new CancelRequest(newRequest.getOrderId());
+		final CancelRequest cancelRequest = CancelRequest.builder().orderId(newRequest.getOrderId()).build();
 		{
 			final Response resp2 = this.orderBook.submitRequest(cancelRequest);
 			assertThat("cancel successful", resp2, instanceOf(SuccessResponse.class));
@@ -57,7 +57,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 
 	@Test
 	public void addFirstSellOrderThenCancel() {
-		final NewRequest newRequest = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 100, 100.1);
+		final NewRequest newRequest = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(100).price(100.1).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(newRequest);
 			assertThat("new order action successful", resp1, instanceOf(SuccessResponse.class));
@@ -65,7 +65,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after new order", resp1.getBidSummary().getDepths(), empty());
 			assertThat("ask market depth after new order", resp1.getAskSummary().getDepths(), hasSize(1));
 			assertThat("ask summary after new order", resp1.getAskSummary().getDepths(), contains(
-					new PriceQuantity(newRequest.getPrice(), newRequest.getQuantity())));
+					PriceQuantity.builder().price(newRequest.getPrice()).quantity(newRequest.getQuantity()).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price queue", snapshot.getBidMarketQueue(), empty());
@@ -77,7 +77,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("snapshot ask limit-price queue", snapshot.getAskLimitQueue().get(newRequest.getPrice()), contains(
 					new OrderOpenQty(resp1.getOrderId(), newRequest.getQuantity())));
 		}
-		final CancelRequest cancelRequest = new CancelRequest(newRequest.getOrderId());
+		final CancelRequest cancelRequest = CancelRequest.builder().orderId(newRequest.getOrderId()).build();
 		{
 			final Response resp2 = this.orderBook.submitRequest(cancelRequest);
 			assertThat("cancel successful", resp2, instanceOf(SuccessResponse.class));
@@ -94,14 +94,14 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 
 	@Test
 	public void addSeveralBuySellOrdersNoCrossing() {
-		final NewRequest buy1_999 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
-		final NewRequest buy2_998 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 200, 99.8);
-		final NewRequest buy3_997 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 300, 99.7);
-		final NewRequest buy4_999 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 400, 99.9);
-		final NewRequest sell1_1001 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 500, 100.1);
-		final NewRequest sell2_1002 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 600, 100.2);
-		final NewRequest sell3_1003 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 700, 100.3);
-		final NewRequest sell4_1001 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 800, 100.1);
+		final NewRequest buy1_999 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
+		final NewRequest buy2_998 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(200).price(99.8).build();
+		final NewRequest buy3_997 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(300).price(99.7).build();
+		final NewRequest buy4_999 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(400).price(99.9).build();
+		final NewRequest sell1_1001 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(500).price(100.1).build();
+		final NewRequest sell2_1002 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(600).price(100.2).build();
+		final NewRequest sell3_1003 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(700).price(100.3).build();
+		final NewRequest sell4_1001 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(800).price(100.1).build();
 
 		final Response resp1;
 		{
@@ -109,7 +109,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 1", resp1.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after order 1", resp1.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after order 1", resp1.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100)));
+					PriceQuantity.builder().price(99.9).quantity(100).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price queue", snapshot.getBidMarketQueue(), empty());
@@ -127,9 +127,9 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 2", resp2.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after order 2", resp2.getAskSummary().getDepths(), hasSize(1));
 			assertThat("bid summary after order 2", resp2.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100)));
+					PriceQuantity.builder().price(99.9).quantity(100).build()));
 			assertThat("ask summary after order 2", resp2.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 500)));
+					PriceQuantity.builder().price(100.1).quantity(500).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price queue", snapshot.getBidMarketQueue(), empty());
@@ -150,10 +150,10 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 3", resp3.getBidSummary().getDepths(), hasSize(2));
 			assertThat("ask market depth after order 3", resp3.getAskSummary().getDepths(), hasSize(1));
 			assertThat("bid summary after order 3", resp3.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100),
-					new PriceQuantity(99.8, 200)));
+					PriceQuantity.builder().price(99.9).quantity(100).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build()));
 			assertThat("ask summary after order 3", resp3.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 500)));
+					PriceQuantity.builder().price(100.1).quantity(500).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price queue", snapshot.getBidMarketQueue(), empty());
@@ -176,11 +176,11 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 4", resp4.getBidSummary().getDepths(), hasSize(2));
 			assertThat("ask market depth after order 4", resp4.getAskSummary().getDepths(), hasSize(2));
 			assertThat("bid summary after order 4", resp4.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100),
-					new PriceQuantity(99.8, 200)));
+					PriceQuantity.builder().price(99.9).quantity(100).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build()));
 			assertThat("ask summary after order 4", resp4.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 500),
-					new PriceQuantity(100.2, 600)));
+					PriceQuantity.builder().price(100.1).quantity(500).build(),
+					PriceQuantity.builder().price(100.2).quantity(600).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price queue", snapshot.getBidMarketQueue(), empty());
@@ -205,12 +205,12 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 5", resp5.getBidSummary().getDepths(), hasSize(3));
 			assertThat("ask market depth after order 5", resp5.getAskSummary().getDepths(), hasSize(2));
 			assertThat("bid summary after order 5", resp5.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100),
-					new PriceQuantity(99.8, 200),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(100).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after order 5", resp5.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 500),
-					new PriceQuantity(100.2, 600)));
+					PriceQuantity.builder().price(100.1).quantity(500).build(),
+					PriceQuantity.builder().price(100.2).quantity(600).build()));
 		}
 		final Response resp6;
 		{
@@ -218,13 +218,13 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 6", resp6.getBidSummary().getDepths(), hasSize(3));
 			assertThat("ask market depth after order 6", resp6.getAskSummary().getDepths(), hasSize(3));
 			assertThat("bid summary after order 6", resp6.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100),
-					new PriceQuantity(99.8, 200),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(100).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after order 5", resp6.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 500),
-					new PriceQuantity(100.2, 600),
-					new PriceQuantity(100.3, 700)));
+					PriceQuantity.builder().price(100.1).quantity(500).build(),
+					PriceQuantity.builder().price(100.2).quantity(600).build(),
+					PriceQuantity.builder().price(100.3).quantity(700).build()));
 		}
 		final Response resp7;
 		{
@@ -232,13 +232,13 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 7", resp7.getBidSummary().getDepths(), hasSize(3));
 			assertThat("ask market depth after order 7", resp7.getAskSummary().getDepths(), hasSize(3));
 			assertThat("bid summary after order 7", resp7.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 500),
-					new PriceQuantity(99.8, 200),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(500).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after order 5", resp7.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 500),
-					new PriceQuantity(100.2, 600),
-					new PriceQuantity(100.3, 700)));
+					PriceQuantity.builder().price(100.1).quantity(500).build(),
+					PriceQuantity.builder().price(100.2).quantity(600).build(),
+					PriceQuantity.builder().price(100.3).quantity(700).build()));
 		}
 		final Response resp8;
 		{
@@ -246,13 +246,13 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after order 8", resp8.getBidSummary().getDepths(), hasSize(3));
 			assertThat("ask market depth after order 8", resp8.getAskSummary().getDepths(), hasSize(3));
 			assertThat("bid summary after order 8", resp8.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 500),
-					new PriceQuantity(99.8, 200),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(500).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after order 5", resp8.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 1300),
-					new PriceQuantity(100.2, 600),
-					new PriceQuantity(100.3, 700)));
+					PriceQuantity.builder().price(100.1).quantity(1300).build(),
+					PriceQuantity.builder().price(100.2).quantity(600).build(),
+					PriceQuantity.builder().price(100.3).quantity(700).build()));
 		}
 
 		final OrderBookSnapshot snapshot1 = this.orderBook.snapshotOrderBook();
@@ -280,17 +280,17 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 				new OrderOpenQty(resp6.getOrderId(), sell3_1003.getQuantity())));
 
 		{
-			final CancelRequest cancelSellReq = new CancelRequest(sell2_1002.getOrderId());
+			final CancelRequest cancelSellReq = CancelRequest.builder().orderId(sell2_1002.getOrderId()).build();
 			final Response cxlSellResp = this.orderBook.submitRequest(cancelSellReq);
 			assertThat("cancel sell request", cxlSellResp, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after order 8", cxlSellResp.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 500),
-					new PriceQuantity(99.8, 200),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(500).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after order 5", cxlSellResp.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 1300),
-					new PriceQuantity(100.2, 0),
-					new PriceQuantity(100.3, 700)));
+					PriceQuantity.builder().price(100.1).quantity(1300).build(),
+					PriceQuantity.builder().price(100.2).quantity(0).build(),
+					PriceQuantity.builder().price(100.3).quantity(700).build()));
 		}
 		final OrderBookSnapshot snapshot2 = this.orderBook.snapshotOrderBook();
 		assertThat("snapshot bid market-price queue cancel sell req 2", snapshot2.getBidMarketQueue(), empty());
@@ -315,17 +315,17 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 		assertThat("snapshot ask limit-price queue cancel sell req 2", snapshot2.getAskLimitQueue().get(sell3_1003.getPrice()), contains(
 				new OrderOpenQty(resp6.getOrderId(), sell3_1003.getQuantity())));
 		{
-			final CancelRequest cancelBuyReq = new CancelRequest(buy2_998.getOrderId());
+			final CancelRequest cancelBuyReq = CancelRequest.builder().orderId(buy2_998.getOrderId()).build();
 			final Response cxlBuyResp = this.orderBook.submitRequest(cancelBuyReq);
 			assertThat("cancel buy request", cxlBuyResp, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after order 8", cxlBuyResp.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 500),
-					new PriceQuantity(99.8, 0),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(500).build(),
+					PriceQuantity.builder().price(99.8).quantity(0).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after order 5", cxlBuyResp.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 1300),
-					new PriceQuantity(100.2, 0),
-					new PriceQuantity(100.3, 700)));
+					PriceQuantity.builder().price(100.1).quantity(1300).build(),
+					PriceQuantity.builder().price(100.2).quantity(0).build(),
+					PriceQuantity.builder().price(100.3).quantity(700).build()));
 		}
 		final OrderBookSnapshot snapshot3 = this.orderBook.snapshotOrderBook();
 		assertThat("snapshot bid market-price queue cancel buy req 2", snapshot3.getBidMarketQueue(), empty());
@@ -352,9 +352,9 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 
 	@Test
 	public void enterCrossableLimitOrder() {
-		final NewRequest buyReq1 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 400, 99.9);
-		final NewRequest sellReq1 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 500, 100.1);
-		final NewRequest sellReq2 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 50, 100.1);
+		final NewRequest buyReq1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(400).price(99.9).build();
+		final NewRequest sellReq1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(500).price(100.1).build();
+		final NewRequest sellReq2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(50).price(100.1).build();
 		final Response buyResp1, sellResp1, sellResp2;
 		{
 			buyResp1 = this.orderBook.submitRequest(buyReq1);
@@ -368,9 +368,9 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("sell order 2 actions no execution", sellResp2.getExecutions(), empty());
 
 			assertThat("bid summary after initial orders", sellResp2.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 400)));
+					PriceQuantity.builder().price(99.9).quantity(400).build()));
 			assertThat("ask summary after initial orders", sellResp2.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 550)));
+					PriceQuantity.builder().price(100.1).quantity(550).build()));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
 			assertThat("snapshot bid market-price", snapshot.getBidMarketQueue(), empty());
@@ -388,19 +388,19 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 					new OrderOpenQty(sellResp2.getOrderId(), sellReq2.getQuantity())));
 		}
 
-		final NewRequest sellExecReq = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 240, 99.9);
+		final NewRequest sellExecReq = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(240).price(99.9).build();
 		final Response sellExecResp;
 		{
 			sellExecResp = this.orderBook.submitRequest(sellExecReq);
 			assertThat("crossable sell order successful", sellExecResp, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after 1 sell order", sellExecResp.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 400 - 240)));
+					PriceQuantity.builder().price(99.9).quantity(400 - 240).build()));
 			assertThat("ask summary after 1 sell order", sellExecResp.getAskSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 550)));
+					PriceQuantity.builder().price(100.1).quantity(550).build()));
 
 			final SuccessResponse success1 = (SuccessResponse) sellExecResp;
 			assertThat("execution", success1.getExecutions(), containsInAnyOrder(
-					new Execution(buyReq1.getOrderId(), sellExecReq.getOrderId(), sellExecReq.getQuantity(), sellExecReq.getPrice())
+					Execution.builder().buyOrderId(buyReq1.getOrderId()).sellOrderId(sellExecReq.getOrderId()).quantity(sellExecReq.getQuantity()).price(sellExecReq.getPrice()).build()
 			));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
@@ -418,21 +418,21 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 					new OrderOpenQty(sellResp1.getOrderId(), sellReq1.getQuantity()),
 					new OrderOpenQty(sellResp2.getOrderId(), sellReq2.getQuantity())));
 		}
-		final NewRequest buyExecReq = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 580, 100.1);
+		final NewRequest buyExecReq = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(580).price(100.1).build();
 		final Response buyExecResp;
 		{
 			buyExecResp = this.orderBook.submitRequest(buyExecReq);
 			assertThat("crossable buy order successful", buyExecResp, instanceOf(SuccessResponse.class));
 
 			assertThat("bid summary after 1 buy order partially filled", buyExecResp.getBidSummary().getDepths(), contains(
-					new PriceQuantity(100.1, 580 - 550),
-					new PriceQuantity(99.9, 400 - 240)));
+					PriceQuantity.builder().price(100.1).quantity(580 - 550).build(),
+					PriceQuantity.builder().price(99.9).quantity(400 - 240).build()));
 			assertThat("ask summary after buy order consumed all queued sell order", buyExecResp.getAskSummary().getDepths(), empty());
 
 			final SuccessResponse success2 = (SuccessResponse) buyExecResp;
 			assertThat("execution", success2.getExecutions(), containsInAnyOrder(
-					new Execution(buyExecReq.getOrderId(), sellReq1.getOrderId(), sellReq1.getQuantity(), buyExecReq.getPrice()),
-					new Execution(buyExecReq.getOrderId(), sellReq2.getOrderId(), sellReq2.getQuantity(), buyExecReq.getPrice())
+					Execution.builder().buyOrderId(buyExecReq.getOrderId()).sellOrderId(sellReq1.getOrderId()).quantity(sellReq1.getQuantity()).price(buyExecReq.getPrice()).build(),
+					Execution.builder().buyOrderId(buyExecReq.getOrderId()).sellOrderId(sellReq2.getOrderId()).quantity(sellReq2.getQuantity()).price(buyExecReq.getPrice()).build()
 			));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
@@ -451,11 +451,11 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 
 	@Test
 	public void executionAcrossMultipleOrdersObeyPriceTimePriority() {
-		final NewRequest buyReq1 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 60, 99.9);
-		final NewRequest buyReq2 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 200, 99.8);
-		final NewRequest buyReq3 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 300, 99.7);
+		final NewRequest buyReq1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(60).price(99.9).build();
+		final NewRequest buyReq2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(200).price(99.8).build();
+		final NewRequest buyReq3 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(300).price(99.7).build();
 		// same price as buy-1, but later
-		final NewRequest buyReq4 = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 40, 99.9);
+		final NewRequest buyReq4 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(40).price(99.9).build();
 		{
 			final Response buyResp1 = this.orderBook.submitRequest(buyReq1);
 			assertThat("new buy order 1 successful", buyResp1, instanceOf(SuccessResponse.class));
@@ -470,22 +470,22 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("new buy order 4 successful", buyResp4, instanceOf(SuccessResponse.class));
 			assertThat("new byu order 4 no execution", buyResp4.getExecutions(), empty());
 		}
-		final NewRequest sellReq1 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.MARKET, 80, 0);
+		final NewRequest sellReq1 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.MARKET).quantity(80).price(0).build();
 		{
 			final Response sellResp1 = this.orderBook.submitRequest(sellReq1);
 			assertThat("new sell order 1 successful", sellResp1, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after sell 1", sellResp1.getBidSummary().getDepths(), contains(
-					new PriceQuantity(99.9, 100 - 80),
-					new PriceQuantity(99.8, 200),
-					new PriceQuantity(99.7, 300)));
+					PriceQuantity.builder().price(99.9).quantity(100 - 80).build(),
+					PriceQuantity.builder().price(99.8).quantity(200).build(),
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 
 			assertThat("ask summary after sell 1", sellResp1.getAskSummary().getDepths(), empty());
 			final SuccessResponse success1 = (SuccessResponse) sellResp1;
 			assertThat("execution 1", success1.getExecutions(), contains(
 					// buy 1 gets more qty
-					new Execution(buyReq1.getOrderId(), sellReq1.getOrderId(), 60, buyReq1.getPrice()),
+					Execution.builder().buyOrderId(buyReq1.getOrderId()).sellOrderId(sellReq1.getOrderId()).quantity(60).price(buyReq1.getPrice()).build(),
 					// buy 2 gets residuals
-					new Execution(buyReq4.getOrderId(), sellReq1.getOrderId(), 20, buyReq4.getPrice())
+					Execution.builder().buyOrderId(buyReq4.getOrderId()).sellOrderId(sellReq1.getOrderId()).quantity(20).price(buyReq4.getPrice()).build()
 			));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
@@ -503,19 +503,19 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 					new OrderOpenQty(buyReq3.getOrderId(), buyReq3.getQuantity())
 			));
 		}
-		final NewRequest sellReq2 = new NewRequest(this.idGenerator.getNextId(), Side.SELL, OrderType.LIMIT, 80, 99.7);
+		final NewRequest sellReq2 = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.SELL).orderType(OrderType.LIMIT).quantity(80).price(99.7).build();
 		{
 			final Response sellResp2 = this.orderBook.submitRequest(sellReq2);
 			assertThat("new sell order 2 successful", sellResp2, instanceOf(SuccessResponse.class));
 			assertThat("bid summary after sell 2", sellResp2.getBidSummary().getDepths(), contains(
-					//new PriceQuantity(99.9, 100-80), // 20 shr @ 99.9
-					new PriceQuantity(99.8, 200 - 60), // 60 shr @ 99.8
-					new PriceQuantity(99.7, 300)));
+					//PriceQuantity.builder().price(99.9).quantity( 100-80).build(), // 20 shr @ 99.9
+					PriceQuantity.builder().price(99.8).quantity(200 - 60).build(), // 60 shr @ 99.8
+					PriceQuantity.builder().price(99.7).quantity(300).build()));
 			assertThat("ask summary after sell 1", sellResp2.getAskSummary().getDepths(), empty());
 			final SuccessResponse success2 = (SuccessResponse) sellResp2;
 			assertThat("execution 1", success2.getExecutions(), containsInAnyOrder(
-					new Execution(buyReq4.getOrderId(), sellReq2.getOrderId(), 20, buyReq1.getPrice()),
-					new Execution(buyReq2.getOrderId(), sellReq2.getOrderId(), 60, buyReq2.getPrice())
+					Execution.builder().buyOrderId(buyReq4.getOrderId()).sellOrderId(sellReq2.getOrderId()).quantity(20).price(buyReq1.getPrice()).build(),
+					Execution.builder().buyOrderId(buyReq2.getOrderId()).sellOrderId(sellReq2.getOrderId()).quantity(60).price(buyReq2.getPrice()).build()
 			));
 
 			final OrderBookSnapshot snapshot = this.orderBook.snapshotOrderBook();
@@ -525,7 +525,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("snapshot ask limit-price", snapshot.getAskLimitQueue(), anEmptyMap());
 			assertThat("snapshot bid limit-price queue after sell @99.7", snapshot.getBidLimitQueue().keySet(), containsInAnyOrder(buyReq2.getPrice(), buyReq3.getPrice()));
 			assertThat("snapshot bid limit-price queue after sell @99.7", snapshot.getBidLimitQueue().get(buyReq2.getPrice()), contains(
-					new OrderOpenQty(buyReq2.getOrderId(), buyReq2.getQuantity() - (80-60))
+					new OrderOpenQty(buyReq2.getOrderId(), buyReq2.getQuantity() - (80 - 60))
 			));
 			assertThat("snapshot bid limit-price queue after sell @99.7", snapshot.getBidLimitQueue().get(buyReq3.getPrice()), contains(
 					new OrderOpenQty(buyReq3.getOrderId(), buyReq3.getQuantity())
@@ -535,13 +535,13 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 
 	@Test
 	public void cancelNonExistentOrder() {
-		final NewRequest newRequest = new NewRequest(this.idGenerator.getNextId(), Side.BUY, OrderType.LIMIT, 100, 99.9);
+		final NewRequest newRequest = NewRequest.builder().orderId(this.idGenerator.getNextId()).side(Side.BUY).orderType(OrderType.LIMIT).quantity(100).price(99.9).build();
 		{
 			final Response resp1 = this.orderBook.submitRequest(newRequest);
 			assertThat("new order action successful", resp1, instanceOf(SuccessResponse.class));
 		}
 		final long orderId = idGenerator.getNextId();
-		final CancelRequest request = new CancelRequest(orderId);
+		final CancelRequest request = CancelRequest.builder().orderId(orderId).build();
 		{
 			final Response response = this.orderBook.submitRequest(request);
 			assertThat("expects error for cancelling non-existent order", response, instanceOf(ErrorResponse.class));
@@ -549,7 +549,7 @@ public class OrderBookNewCancelTest extends OrderBookTestBase {
 			assertThat("bid market depth after new order", response.getBidSummary().getDepths(), hasSize(1));
 			assertThat("ask market depth after new order", response.getAskSummary().getDepths(), empty());
 			assertThat("bid summary after new order", response.getBidSummary().getDepths(), contains(
-					new PriceQuantity(newRequest.getPrice(), newRequest.getQuantity())
+					PriceQuantity.builder().price(newRequest.getPrice()).quantity(newRequest.getQuantity()).build()
 			));
 		}
 	}

@@ -56,7 +56,7 @@ public class MatchingEngineTest {
 		assertThat("new order order qty", newEr.getOrderQty(), is(orderQty));
 		assertThat("new order side", newEr.getSide(), is(side));
 		assertThat("new order side", newEr.getPrice(), is(price));
-		assertThat("new order status", newEr.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new order status", newEr.getOrderStatus(), is(OrderStatus.NEW));
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class MatchingEngineTest {
 		assertThat("expect execution report", newReport.get(0), instanceOf(ExecutionReport.class));
 
 		final ExecutionReport newEr = (ExecutionReport) newReport.get(0);
-		assertThat("new order status", newEr.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new order status", newEr.getOrderStatus(), is(OrderStatus.NEW));
 
 		final String newClOrdId = "clOrdId-" + random.nextInt(10000);
 		final String origClOrdId = clOrdId;
@@ -90,7 +90,7 @@ public class MatchingEngineTest {
 		assertThat("new order order qty", amendEr.getOrderQty(), is(newQty));
 		assertThat("new order side", amendEr.getSide(), is(side));
 		assertThat("new order side", amendEr.getPrice(), is(newPrice));
-		assertThat("new order status", amendEr.getOrderState(), is(OrderStatus.REPLACED));
+		assertThat("new order status", amendEr.getOrderStatus(), is(OrderStatus.REPLACED));
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class MatchingEngineTest {
 		assertThat("expect execution report", newReport.get(0), instanceOf(ExecutionReport.class));
 
 		final ExecutionReport newEr = (ExecutionReport) newReport.get(0);
-		assertThat("new order status", newEr.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new order status", newEr.getOrderStatus(), is(OrderStatus.NEW));
 
 		final String cancelClOrdId = "clOrdId-" + random.nextInt(10000);
 		final String origClOrdId = clOrdId;
@@ -121,7 +121,7 @@ public class MatchingEngineTest {
 		assertThat("new order order qty", cxlEr.getOrderQty(), is(orderQty));
 		assertThat("new order side", cxlEr.getSide(), is(side));
 		assertThat("new order side", cxlEr.getPrice(), is(price));
-		assertThat("new order status", cxlEr.getOrderState(), is(OrderStatus.CANCELLED));
+		assertThat("new order status", cxlEr.getOrderStatus(), is(OrderStatus.CANCELLED));
 	}
 
 	@Test
@@ -133,7 +133,7 @@ public class MatchingEngineTest {
 		assertThat("response message for buy order 1", buyReport1, hasSize(1));
 		assertThat("expect execution report", buyReport1.get(0), instanceOf(ExecutionReport.class));
 		final ExecutionReport buy1Er1 = (ExecutionReport) buyReport1.get(0);
-		assertThat("new buy order status", buy1Er1.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new buy order status", buy1Er1.getOrderStatus(), is(OrderStatus.NEW));
 
 		final OrderBookSnapshot snap0 = this.matchingEngine.snapshotOrderBook();
 		assertThat("snapshot after execution bid limit price ", snap0.getBidLimitQueue(), aMapWithSize(1));
@@ -152,7 +152,7 @@ public class MatchingEngineTest {
 		assertThat("expect execution report for buy execution", sellReport1.get(1), instanceOf(ExecutionReport.class));
 		assertThat("expect execution report for sell execution", sellReport1.get(2), instanceOf(ExecutionReport.class));
 		final ExecutionReport sell1Er1 = (ExecutionReport) sellReport1.get(0);
-		assertThat("new order status", sell1Er1.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new order status", sell1Er1.getOrderStatus(), is(OrderStatus.NEW));
 		assertThat("new order status", sell1Er1.getClOrdId(), is(clOrdIdSell1));
 		final ExecutionReport sell1BuyEr = (ExecutionReport) sellReport1.get(1);
 		assertThat("execution report for buy trade, clOrdId", sell1BuyEr.getClOrdId(), is(clOrdIdBuy1));
@@ -164,7 +164,7 @@ public class MatchingEngineTest {
 		assertThat("execution report for buy trade, avgPx", sell1BuyEr.getAvgPx(), is(35000d));
 		assertThat("execution report for buy trade, lastQty", sell1BuyEr.getLastQty(), is(100d));
 		assertThat("execution report for buy trade, lastPx", sell1BuyEr.getLastPx(), is(35000d));
-		assertThat("execution report for buy trade, order state", sell1BuyEr.getOrderState(), is(OrderStatus.FILLED));
+		assertThat("execution report for buy trade, order state", sell1BuyEr.getOrderStatus(), is(OrderStatus.FILLED));
 
 		final ExecutionReport sell1SellEr = (ExecutionReport) sellReport1.get(2);
 		assertThat("execution report for sell trade, clOrdId", sell1SellEr.getClOrdId(), is(clOrdIdSell1));
@@ -176,7 +176,7 @@ public class MatchingEngineTest {
 		assertThat("execution report for sell trade, avgPx", sell1SellEr.getAvgPx(), is(35000d));
 		assertThat("execution report for sell trade, lastQty", sell1SellEr.getLastQty(), is(100d));
 		assertThat("execution report for sell trade, lastPx", sell1SellEr.getLastPx(), is(35000d));
-		assertThat("execution report for sell trade, order state", sell1SellEr.getOrderState(), is(OrderStatus.PARTIAL_FILLLED));
+		assertThat("execution report for sell trade, order state", sell1SellEr.getOrderStatus(), is(OrderStatus.PARTIAL_FILLED));
 
 		final OrderBookSnapshot snap1 = this.matchingEngine.snapshotOrderBook();
 		assertThat("snapshot after execution bid limit price ", snap1.getBidLimitQueue(), anEmptyMap());
@@ -192,7 +192,7 @@ public class MatchingEngineTest {
 		final List<ResponseMessage> sellReport2 = this.matchingEngine.submitNewOrderRequest(clOrdIdSell2, SELL, LIMIT, 140, 36000d);
 		assertThat("response message for sell order 2", sellReport2, hasSize(1));
 		final ExecutionReport sell2Er1 = (ExecutionReport) sellReport2.get(0);
-		assertThat("new order status", sell2Er1.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new order status", sell2Er1.getOrderStatus(), is(OrderStatus.NEW));
 		assertThat("new order status", sell2Er1.getClOrdId(), is(clOrdIdSell2));
 
 		final OrderBookSnapshot snap2 = this.matchingEngine.snapshotOrderBook();
@@ -212,7 +212,7 @@ public class MatchingEngineTest {
 		final List<ResponseMessage> buyReport2 = this.matchingEngine.submitNewOrderRequest(clOrdIdBuy2, BUY, LIMIT, 200, 36500d);
 		assertThat("response message for buy order 2", buyReport2, hasSize(5)); // 1x new ack+ 2x buy/see
 		final ExecutionReport buy2Er1 = (ExecutionReport) buyReport2.get(0);
-		assertThat("new order status", buy2Er1.getOrderState(), is(OrderStatus.NEW));
+		assertThat("new order status", buy2Er1.getOrderStatus(), is(OrderStatus.NEW));
 		assertThat("new order clOrdId", buy2Er1.getClOrdId(), is(clOrdIdBuy2));
 		assertThat("new order Side", buy2Er1.getSide(), is(BUY));
 		assertThat("new order OrdType", buy2Er1.getOrderType(), is(LIMIT));
@@ -231,7 +231,7 @@ public class MatchingEngineTest {
 		assertThat("execution report for buy trade, avgPx", buy2BuyEr1.getAvgPx(), is(35000d));
 		assertThat("execution report for buy trade, lastQty", buy2BuyEr1.getLastQty(), is(20d));
 		assertThat("execution report for buy trade, lastPx", buy2BuyEr1.getLastPx(), is(35000d));
-		assertThat("execution report for buy trade, order state", buy2BuyEr1.getOrderState(), is(OrderStatus.PARTIAL_FILLLED));
+		assertThat("execution report for buy trade, order state", buy2BuyEr1.getOrderStatus(), is(OrderStatus.PARTIAL_FILLED));
 
 		final ExecutionReport buy2SellEr1 = (ExecutionReport) buyReport2.get(2); // sell 20@35000, sell ord 1
 		assertThat("execution report for sell trade, clOrdId", buy2SellEr1.getClOrdId(), is(clOrdIdSell1));
@@ -244,7 +244,7 @@ public class MatchingEngineTest {
 		assertThat("execution report for sell trade, avgPx", buy2SellEr1.getAvgPx(), is((35000d * 100 + 35000d * 20) / (100 + 20)));
 		assertThat("execution report for sell trade, lastQty", buy2SellEr1.getLastQty(), is(20d));
 		assertThat("execution report for sell trade, lastPx", buy2SellEr1.getLastPx(), is(35000d));
-		assertThat("execution report for sell trade, order state", buy2SellEr1.getOrderState(), is(OrderStatus.FILLED));
+		assertThat("execution report for sell trade, order state", buy2SellEr1.getOrderStatus(), is(OrderStatus.FILLED));
 
 		final ExecutionReport buy2BuyEr2 = (ExecutionReport) buyReport2.get(3); // buy 140@36000   this order
 		assertThat("execution report for buy trade, clOrdId", buy2BuyEr2.getClOrdId(), is(clOrdIdBuy2));
@@ -257,7 +257,7 @@ public class MatchingEngineTest {
 		assertThat("execution report for buy trade, avgPx", buy2BuyEr2.getAvgPx(), is((35000d * 20d + 36000d * 140d) / (20d + 140d)));
 		assertThat("execution report for buy trade, lastQty", buy2BuyEr2.getLastQty(), is(140d));
 		assertThat("execution report for buy trade, lastPx", buy2BuyEr2.getLastPx(), is(36000d));
-		assertThat("execution report for buy trade, order state", buy2BuyEr2.getOrderState(), is(OrderStatus.PARTIAL_FILLLED));
+		assertThat("execution report for buy trade, order state", buy2BuyEr2.getOrderStatus(), is(OrderStatus.PARTIAL_FILLED));
 
 		final ExecutionReport buy2SellEr2 = (ExecutionReport) buyReport2.get(4); // sell 140@36000  sell ord 2
 		assertThat("execution report for sell trade, clOrdId", buy2SellEr2.getClOrdId(), is(clOrdIdSell2));
@@ -270,7 +270,7 @@ public class MatchingEngineTest {
 		assertThat("execution report for sell trade, avgPx", buy2SellEr2.getAvgPx(), is(36000d));
 		assertThat("execution report for sell trade, lastQty", buy2SellEr2.getLastQty(), is(140d));
 		assertThat("execution report for sell trade, lastPx", buy2SellEr2.getLastPx(), is(36000d));
-		assertThat("execution report for sell trade, order state", buy2SellEr2.getOrderState(), is(OrderStatus.FILLED));
+		assertThat("execution report for sell trade, order state", buy2SellEr2.getOrderStatus(), is(OrderStatus.FILLED));
 
 		final OrderBookSnapshot snap3 = this.matchingEngine.snapshotOrderBook();
 		assertThat("snapshot after execution bid limit price ", snap3.getBidLimitQueue(), aMapWithSize(2));
